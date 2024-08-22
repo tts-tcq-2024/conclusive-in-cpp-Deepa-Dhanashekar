@@ -1,6 +1,11 @@
 #include "typewise-alert.h"
 #include <stdio.h>
 
+typedef struct {
+    double lowerLimit;
+    double upperLimit;
+} BreachLimits;
+
 BreachType inferBreach(double value, double lowerLimit, double upperLimit) {
   if (value < lowerLimit) {
     return TOO_LOW;
@@ -47,10 +52,10 @@ void sendToController(BreachType breachType) {
 }
 
 void sendToEmail(BreachType breachType) {
-  const char* recepient = "a.b@c.com";
+  const char* recipient = "a.b@c.com";
   if (breachType == TOO_LOW) {
-    printf("To: %s\nHi, the temperature is too low\n", recepient);
+    printf("To: %s\nHi, the temperature is too low\n", recipient);
   } else if (breachType == TOO_HIGH) {
-    printf("To: %s\nHi, the temperature is too high\n", recepient);
+    printf("To: %s\nHi, the temperature is too high\n", recipient);
   }
 }
