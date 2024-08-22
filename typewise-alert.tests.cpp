@@ -1,61 +1,25 @@
 #include <gtest/gtest.h>
 #include "typewise-alert.h"
 
-// Mocks
-extern BreachType Mock_classifyTemperatureBreach(CoolingType coolingType, double temperatureInC);
-extern BreachType mock_breach;
-extern BreachType (*Func_ptr_classifyTemperatureBreach)(CoolingType, double);
-
-// Replace the actual classifyTemperatureBreach function with Mock_classifyTemperatureBreach
-BreachType Mock_classifyTemperatureBreach(CoolingType coolingType, double temperatureInC) {
-    return mock_breach;  // Return the pre-set breach type
+TEST(TypeWiseAlertTestSuite, InfersBreachAccordingToLimits) {
+    EXPECT_EQ(inferBreach(25, 20, 30), NORMAL);
+    EXPECT_EQ(inferBreach(15, 20, 30), TOO_LOW);
+    EXPECT_EQ(inferBreach(35, 20, 30), TOO_HIGH);
 }
 
-// Test Cases
-TEST(TypeWiseAlertTestSuite, TestCheckAndAlertLowBreachController) {
-    Func_ptr_classifyTemperatureBreach = Mock_classifyTemperatureBreach;
-    mock_breach = TOO_LOW;
+TEST(TypeWiseAlertTestSuite, ClassifiesTemperatureBreach) {
+    EXPECT_EQ(classifyTemperatureBreach(PASSIVE_COOLING, 30), NORMAL);
+    EXPECT_EQ(classifyTemperatureBreach(PASSIVE_COOLING, 40), TOO_HIGH);
+    EXPECT_EQ(classifyTemperatureBreach(HI_ACTIVE_COOLING, 50), TOO_HIGH);
+    EXPECT_EQ(classifyTemperatureBreach(MED_ACTIVE_COOLING, -1), TOO_LOW);
+}
+
+TEST(TypeWiseAlertTestSuite, CheckAndAlertController) {
     BatteryCharacter batteryChar = {PASSIVE_COOLING, "BrandX"};
-    checkAndAlert(TO_CONTROLLER, batteryChar, -10);
-    EXPECT_EQ(mock_breach, TOO_LOW);
+    checkAndAlert(TO_CONTROLLER, batteryChar, 30);  // Should send normal alert to controller
 }
 
-TEST(TypeWiseAlertTestSuite, TestCheckAndAlertHighBreachController) {
-    Func_ptr_classifyTemperatureBreach = Mock_classifyTemperatureBreach;
-    mock_breach = TOO_HIGH;
-    BatteryCharacter batteryChar = {PASSIVE_COOLING, "BrandX"};
-    checkAndAlert(TO_CONTROLLER, batteryChar, 50);
-    EXPECT_EQ(mock_breach, TOO_HIGH);
-}
-
-TEST(TypeWiseAlertTestSuite, TestCheckAndAlertHighBreachEmail) {
-    Func_ptr_classifyTemperatureBreach = Mock_classifyTemperatureBreach;
-    mock_breach = TOO_HIGH;
+TEST(TypeWiseAlertTestSuite, CheckAndAlertEmail) {
     BatteryCharacter batteryChar = {HI_ACTIVE_COOLING, "BrandY"};
-    checkAndAlert(TO_EMAIL, batteryChar, 50);
-    EXPECT_EQ(mock_breach, TOO_HIGH);
-}
-
-TEST(TypeWiseAlertTestSuite, TestCheckAndAlertLowBreachEmail) {
-    Func_ptr_classifyTemperatureBreach = Mock_classifyTemperatureBreach;
-    mock_breach = TOO_LOW;
-    BatteryCharacter batteryChar = {HI_ACTIVE_COOLING, "BrandY"};
-    checkAndAlert(TO_EMAIL, batteryChar, -1);
-    EXPECT_EQ(mock_breach, TOO_LOW);
-}
-
-TEST(TypeWiseAlertTestSuite, TestCheckAndAlertNormalBreachController) {
-    Func_ptr_classifyTemperatureBreach = Mock_classifyTemperatureBreach;
-    mock_breach = NORMAL;
-    BatteryCharacter batteryChar = {PASSIVE_COOLING, "BrandX"};
-    checkAndAlert(TO_CONTROLLER, batteryChar, 5);
-    EXPECT_EQ(mock_breach, NORMAL);
-}
-
-TEST(TypeWiseAlertTestSuite, TestCheckAndAlertBoundaryCondition) {
-    Func_ptr_classifyTemperatureBreach = Mock_classifyTemperatureBreach;
-    mock_breach = NORMAL;
-    BatteryCharacter batteryChar = {PASSIVE_COOLING, "BrandX"};
-    checkAndAlert(TO_CONTROLLER, batteryChar, 35);  // Upper boundary for PASSIVE_COOLING
-    EXPECT_EQ(mock_breach, NORMAL);
+    checkAndAlert(TO_EMAIL, batteryChar, 50);  // Should send too high alert via email
 }
